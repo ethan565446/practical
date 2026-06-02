@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>10以内加减法练习</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* 标题 */
+  .title {
+    text-align: center;
+    color: #fff;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .subtitle {
+    text-align: center;
+    color: rgba(255,255,255,0.75);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  /* 主卡片 */
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 36px 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+
+  /* 得分栏 */
+  .score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 2px dashed #f0edf8;
+  }
+
+  .score-item { text-align: center; }
+  .score-num {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .score-label {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .score-correct .score-num { color: #4caf50; }
+  .score-wrong  .score-num { color: #f44336; }
+  .score-total  .score-num { color: #667eea; }
+
+  /* 进度条 */
+  .progress-wrap {
+    background: #f0edf8;
+    border-radius: 6px;
+    height: 8px;
+    margin-bottom: 32px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 6px;
+    transition: width 0.4s ease;
+  }
+
+  /* 题目区 */
+  .question-wrap {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .question {
+    font-size: 64px;
+    font-weight: 800;
+    color: #2c2c2c;
+    letter-spacing: 6px;
+    line-height: 1;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .question .op { color: #667eea; }
+  .question .eq { color: #aaa; }
+  .question .blank {
+    display: inline-block;
+    min-width: 72px;
+    border-bottom: 5px solid #764ba2;
+    color: transparent;
+  }
+
+  .question-hint {
+    font-size: 13px;
+    color: #bbb;
+    min-height: 20px;
+  }
+
+  /* 数字键盘 */
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .key {
+    aspect-ratio: 1;
+    border: none;
+    border-radius: 14px;
+    font-size: 26px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
+    background: #f5f3ff;
+    color: #4a3a8a;
+    box-shadow: 0 4px 0 #d8d0f5;
+  }
+
+  .key:hover { background: #ebe5ff; }
+  .key:active { transform: translateY(3px); box-shadow: 0 1px 0 #d8d0f5; }
+
+  .key.del {
+    background: #fff0f0;
+    color: #f44336;
+    box-shadow: 0 4px 0 #ffd0d0;
+    font-size: 20px;
+  }
+  .key.del:hover { background: #ffe0e0; }
+  .key.del:active { transform: translateY(3px); box-shadow: 0 1px 0 #ffd0d0; }
+
+  .key.zero {
+    grid-column: span 2;
+    aspect-ratio: auto;
+    padding: 16px;
+  }
+
+  /* 提交按钮 */
+  .submit-btn {
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #5060c0;
+    transition: transform 0.1s, box-shadow 0.1s, opacity 0.2s;
+    font-family: inherit;
+  }
+
+  .submit-btn:hover { opacity: 0.92; }
+  .submit-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #5060c0; }
+  .submit-btn:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+  /* 答题反馈动画 */
+  .feedback {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    font-size: 96px;
+    opacity: 0;
+    pointer-events: none;
+    transition: none;
+    z-index: 99;
+  }
+
+  .feedback.show {
+    animation: popFade 0.7s ease forwards;
+  }
+
+  @keyframes popFade {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    30%  { opacity: 1; transform: translate(-50%, -60%) scale(1.2); }
+    70%  { opacity: 1; transform: translate(-50%, -65%) scale(1.0); }
+    100% { opacity: 0; transform: translate(-50%, -80%) scale(0.9); }
+  }
+
+  /* 抖动动画（答错时） */
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%     { transform: translateX(-10px); }
+    40%     { transform: translateX(10px); }
+    60%     { transform: translateX(-8px); }
+    80%     { transform: translateX(8px); }
+  }
+
+  .question.shake { animation: shake 0.4s ease; }
+
+  /* 结算界面 */
+  .result-screen {
+    display: none;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .result-screen.visible { display: block; }
+
+  .result-emoji { font-size: 80px; margin-bottom: 16px; }
+  .result-title { font-size: 26px; font-weight: 800; color: #2c2c2c; margin-bottom: 8px; }
+  .result-sub { font-size: 15px; color: #888; margin-bottom: 28px; line-height: 1.8; }
+
+  .result-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  .rs-item {
+    background: #f5f3ff;
+    border-radius: 16px;
+    padding: 16px 20px;
+    min-width: 90px;
+  }
+
+  .rs-num { font-size: 32px; font-weight: 800; color: #667eea; }
+  .rs-label { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+  .restart-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .restart-btn:hover { opacity: 0.9; }
+
+  /* 当前答案显示 */
+  .answer-display {
+    display: inline-block;
+    min-width: 72px;
+    border-bottom: 5px solid #764ba2;
+    color: #2c2c2c;
+    transition: color 0.2s;
+  }
+
+  .answer-display.correct { color: #4caf50; border-color: #4caf50; }
+  .answer-display.wrong   { color: #f44336; border-color: #f44336; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="title">🧮 口算练习</div>
+  <p class="subtitle">10以内加减法 · 共10题</p>
+
+  <div class="card">
+    <!-- 主界面 -->
+    <div id="quizScreen">
+      <div class="score-bar">
+        <div class="score-item score-correct">
+          <div class="score-num" id="correctCount">0</div>
+          <div class="score-label">✓ 答对</div>
+        </div>
+        <div class="score-item score-wrong">
+          <div class="score-num" id="wrongCount">0</div>
+          <div class="score-label">✗ 答错</div>
+        </div>
+        <div class="score-item score-total">
+          <div class="score-num" id="questionIndex">1</div>
+          <div class="score-label">/ 10 题</div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+
+      <div class="question-wrap">
+        <div class="question" id="question">
+          <span id="num1">?</span>
+          <span class="op" id="operator">+</span>
+          <span id="num2">?</span>
+          <span class="eq">=</span>
+          <span class="answer-display" id="answerDisplay">&nbsp;</span>
+        </div>
+        <div class="question-hint" id="hint"></div>
+      </div>
+
+      <div class="keypad">
+        <button class="key" onclick="pressKey('1')">1</button>
+        <button class="key" onclick="pressKey('2')">2</button>
+        <button class="key" onclick="pressKey('3')">3</button>
+        <button class="key" onclick="pressKey('4')">4</button>
+        <button class="key" onclick="pressKey('5')">5</button>
+        <button class="key" onclick="pressKey('6')">6</button>
+        <button class="key" onclick="pressKey('7')">7</button>
+        <button class="key" onclick="pressKey('8')">8</button>
+        <button class="key" onclick="pressKey('9')">9</button>
+        <button class="key del" onclick="pressDelete()">⌫</button>
+        <button class="key zero" onclick="pressKey('0')">0</button>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="submit()" disabled>确认答案</button>
+    </div>
+
+    <!-- 结算界面 -->
+    <div class="result-screen" id="resultScreen">
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+      <div class="result-title" id="resultTitle">太棒了！</div>
+      <div class="result-sub" id="resultSub"></div>
+      <div class="result-stats">
+        <div class="rs-item">
+          <div class="rs-num" id="rCorrect">0</div>
+          <div class="rs-label">答对</div>
+        </div>
+        <div class="rs-item">
+          <div class="rs-num" id="rWrong">0</div>
+          <div class="rs-label">答错</div>
+        </div>
+        <div class="rs-item">
+          <div class="rs-num" id="rAccuracy">0%</div>
+          <div class="rs-label">正确率</div>
+        </div>
+      </div>
+      <button class="restart-btn" onclick="restart()">再来一次 🔄</button>
+    </div>
+  </div>
+</div>
+
+<div class="feedback" id="feedback"></div>
+
+<script>
+const TOTAL = 10;
+let current = {};
+let answer = '';
+let correct = 0;
+let wrong = 0;
+let questionNum = 1;
+let locked = false;
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function generateQuestion() {
+  let a, b, op, ans;
+  op = Math.random() < 0.5 ? '+' : '-';
+  if (op === '+') {
+    a = randInt(0, 10);
+    b = randInt(0, 10 - a);
+    ans = a + b;
+  } else {
+    a = randInt(1, 10);
+    b = randInt(0, a);
+    ans = a - b;
+  }
+  return { a, b, op, ans };
+}
+
+function nextQuestion() {
+  current = generateQuestion();
+  answer = '';
+  locked = false;
+
+  document.getElementById('num1').textContent = current.a;
+  document.getElementById('operator').textContent = current.op;
+  document.getElementById('num2').textContent = current.b;
+
+  const disp = document.getElementById('answerDisplay');
+  disp.textContent = ' ';
+  disp.className = 'answer-display';
+
+  document.getElementById('hint').textContent = '';
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('questionIndex').textContent = questionNum;
+  document.getElementById('progressFill').style.width = ((questionNum - 1) / TOTAL * 100) + '%';
+}
+
+function pressKey(digit) {
+  if (locked) return;
+  if (answer.length >= 2) return; // 最多两位
+  answer += digit;
+  const disp = document.getElementById('answerDisplay');
+  disp.textContent = answer;
+  disp.className = 'answer-display';
+  document.getElementById('submitBtn').disabled = false;
+}
+
+function pressDelete() {
+  if (locked) return;
+  answer = answer.slice(0, -1);
+  const disp = document.getElementById('answerDisplay');
+  disp.textContent = answer || ' ';
+  disp.className = 'answer-display';
+  document.getElementById('submitBtn').disabled = answer.length === 0;
+}
+
+function showFeedback(emoji) {
+  const el = document.getElementById('feedback');
+  el.textContent = emoji;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function submit() {
+  if (locked || answer === '') return;
+  locked = true;
+
+  const userAns = parseInt(answer);
+  const isCorrect = userAns === current.ans;
+
+  const disp = document.getElementById('answerDisplay');
+  const qEl  = document.getElementById('question');
+
+  if (isCorrect) {
+    correct++;
+    disp.className = 'answer-display correct';
+    document.getElementById('correctCount').textContent = correct;
+    document.getElementById('hint').textContent = '✓ 回答正确！';
+    document.getElementById('hint').style.color = '#4caf50';
+    showFeedback('⭐');
+  } else {
+    wrong++;
+    disp.className = 'answer-display wrong';
+    document.getElementById('wrongCount').textContent = wrong;
+    document.getElementById('hint').textContent = `✗ 正确答案是 ${current.ans}`;
+    document.getElementById('hint').style.color = '#f44336';
+    qEl.classList.add('shake');
+    qEl.addEventListener('animationend', () => qEl.classList.remove('shake'), { once: true });
+    showFeedback('💪');
+  }
+
+  document.getElementById('submitBtn').disabled = true;
+
+  setTimeout(() => {
+    questionNum++;
+    if (questionNum > TOTAL) {
+      showResult();
+    } else {
+      nextQuestion();
+    }
+  }, 900);
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  const rs = document.getElementById('resultScreen');
+  rs.classList.add('visible');
+
+  const accuracy = Math.round(correct / TOTAL * 100);
+  document.getElementById('rCorrect').textContent = correct;
+  document.getElementById('rWrong').textContent = wrong;
+  document.getElementById('rAccuracy').textContent = accuracy + '%';
+
+  let emoji, title, sub;
+  if (correct === TOTAL) {
+    emoji = '🏆'; title = '完美！满分！';
+    sub = `全部 ${TOTAL} 题都答对了！\n你真的太厉害了！`;
+  } else if (correct >= 8) {
+    emoji = '🌟'; title = '非常棒！';
+    sub = `答对 ${correct} 题，做得很好！\n继续加油就能满分！`;
+  } else if (correct >= 6) {
+    emoji = '😊'; title = '不错哦！';
+    sub = `答对 ${correct} 题，继续练习\n你会越来越厉害的！`;
+  } else {
+    emoji = '💪'; title = '加油！';
+    sub = `答对 ${correct} 题，多多练习\n下次一定会更好！`;
+  }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent = sub;
+}
+
+function restart() {
+  correct = 0;
+  wrong = 0;
+  questionNum = 1;
+  locked = false;
+
+  document.getElementById('correctCount').textContent = 0;
+  document.getElementById('wrongCount').textContent = 0;
+  document.getElementById('quizScreen').style.display = 'block';
+  document.getElementById('resultScreen').classList.remove('visible');
+
+  nextQuestion();
+}
+
+// 键盘支持
+document.addEventListener('keydown', e => {
+  if (e.key >= '0' && e.key <= '9') pressKey(e.key);
+  else if (e.key === 'Backspace') pressDelete();
+  else if (e.key === 'Enter') submit();
+});
+
+// 初始化
+nextQuestion();
+</script>
+</body>
+</html>
